@@ -1,0 +1,169 @@
+package com.coolcode.mapper;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import java.util.Arrays;
+import java.util.List;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import com.coolcode.domain.BoardVO;
+import com.coolcode.domain.Criteria;
+
+import lombok.Setter;
+import lombok.extern.log4j.Log4j;
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration("file:src/main/webapp/WEB-INF/spring/root-context.xml")
+@Log4j
+public class BoardMapperTests {
+	@Setter @Autowired
+	private BoardMapper boardMapper;
+	
+	@Test
+	public void testExist(){
+		assertNotNull(boardMapper);
+	}
+	
+	@Test
+	public void testGetList(){
+		List<BoardVO> result = boardMapper.getList();
+		assertNotNull(result);
+		result.forEach(log::info);
+	}
+
+	@Test
+	public void testGetListWihtPaging(){
+		Criteria cri = new Criteria();
+		cri.setPageNum(4);
+		cri.setAmount(3);
+//		cri.setType("TW");
+//		cri.setKeyword("12");
+		log.info(cri);
+		
+		List<BoardVO> result = boardMapper.getListWithPaging(cri);
+		assertNotNull(result);
+		result.forEach(log::info);
+	}
+
+	@Test
+	public void testRead(){
+		BoardVO result = boardMapper.read(319524L);
+		assertNotNull(result);
+		log.info(result);
+	}
+	
+	@Test
+	public void testInsert(){
+		// init
+		BoardVO boardVO = new BoardVO();
+		boardVO.setTitle("mapper test title");
+		boardVO.setContent("mapper test content");
+		boardVO.setWriter("user00");
+		log.info(boardVO);
+		// expect
+		int exp = 1;
+		
+		// result
+		int result = boardMapper.insert(boardVO);
+		
+		assertEquals("게시글 추가", exp, result);
+		log.info(boardVO);
+	}
+
+	@Test
+	public void testInsertSelectKey(){
+		// init
+		BoardVO boardVO = new BoardVO();
+		boardVO.setTitle("mapper test title selectKey");
+		boardVO.setContent("mapper test content selectKey");
+		boardVO.setWriter("user00");
+		log.info(boardVO);
+		// expect
+		int exp = 1;
+		
+		// result
+		int result = boardMapper.insertSelectKey(boardVO);
+		
+		assertEquals("게시글 추가", exp, result);
+		log.info(boardVO);
+	}
+
+	@Test
+	public void testUpdate(){  // 글번호 3번인 게시글을 가져와서 타이틀, 콘텐츠값 업데이트하는 메서드
+		// init
+		BoardVO boardVO = new BoardVO();
+		log.info("1 :" +boardVO); // 객체 생성만 했으니까 다 널값
+		
+		boardVO.setTitle("21test update");
+		log.info("2 :" +boardVO); // 타이틀값 초기화 했으니까 타이틀에만 값 있음
+		
+		boardVO.setContent("21test update");
+		log.info("3 :" +boardVO); // 위에 타이틀 값 초기화 한 상태에서 콘텐츠 값 초기화하여 타이틀값도 생김
+		
+		boardVO.setBno(3l);
+		log.info("4 :" +boardVO); // 글번호 3으로 초기화 해서 3번 글번호 생김
+		
+		// 여기까지가 객체생성 & 값초기화 (타이틀, 콘텐츠, 글번호를 가진 보드객체 생성)
+		
+		// expect
+		int exp = 1;   
+		log.info("5 :" + boardVO);
+//		
+		// result
+		int result = boardMapper.update(boardVO);  // 위에 만든 보드vo 객체를 update 메서드에 인자로 넘긴 결과값을 result 에 담는다
+		log.info("6 : " + result);  // 한행을 업데이트 했으니까 result = 1  
+		log.info("7 :" + boardVO); //  4번(=5번) 7번 같음 
+		assertEquals("게시글 수정", exp, result);
+		log.info("exp :" + exp); // 한 행을 기대 
+		log.info("result : " + result); // 한 행을 반환
+		log.info("getContent :" + boardVO.getContent()); // 위에 setter로 초기화한 content값과 같음
+		log.info("getTitle :" + boardVO.getTitle()); // set title 한 값과 같음
+		log.info("getBno :" + boardVO.getBno()); // 변경 x 
+		log.info("8 :" + boardVO); // 4=7=8 
+ //		log.info(boardVO);
+	}
+
+	@Test
+	public void testDelete(){
+		// init
+		Long bno = 1l;
+		// expect
+		int exp = 1;
+		
+		// result
+		int result = boardMapper.delete(bno);
+		
+		assertEquals("게시글 삭제", exp, result);
+	}
+	
+	@Test
+	public void testGetTotalCount(){
+		Criteria cri = new Criteria();
+		cri.setPageNum(4);
+		cri.setAmount(3);
+		cri.setType("TW");
+		cri.setKeyword("12");
+		log.info(boardMapper.getTotalCount(cri));
+	}
+	
+	@Test
+	public void testGetListDynamicTest(){
+		Criteria cri = new Criteria();
+//		cri.setType("TC"); //제목 내용
+		log.info(Arrays.toString(cri.getTypeArr()));
+		cri.setKeyword("테스트");
+		boardMapper.getListDynamicTest(cri);
+	}
+	
+	@Test
+	public void testStringJoin(){
+		String[] arr = {"1","2","5","4"};
+		log.info(String.join("", arr));
+	}
+}

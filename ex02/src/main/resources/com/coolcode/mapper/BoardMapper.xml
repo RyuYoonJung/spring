@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="com.coolcode.mapper.BoardMapper">
+  	<sql id="cri">
+  		<trim prefix=" (" suffix=") AND" prefixOverrides="OR">
+			<foreach collection="typeArr" item="t">
+				<trim prefix="OR">
+					<if test="t == 'T'.toString()">
+					LOWER(TITLE) LIKE LOWER('%' ||  #{keyword} || '%')
+					</if>
+					<if test="t == 'C'.toString()">
+					LOWER(CONTENT) LIKE LOWER('%${keyword}%')
+					</if>
+					<if test="t == 'W'.toString()">
+					LOWER(WRITER) LIKE LOWER('%${keyword}%')
+					</if>
+				</trim>
+			</foreach>
+		</trim>
+  	</sql>
+  	
+	<select id="getList" resultType="board">
+		<![CDATA[ 
+		SELECT * FROM TBL_BOARD WHERE 0 < BNO 
+		]]>
+	</select>
+	<select id="getListWithPaging" resultType="board">
+		SELECT 
+			* 
+		FROM (
+		 SELECT 
+		    /*+ INDEX_DESC(TBL_BOARD BOARD_PK) */ 
+		    ROWNUM RN, 
+		    BNO, 
+		    TITLE, 
+		    CONTENT,
+		    WRITER,
+		    REGDATE,
+		    UPDATEDATE,
+		    REPLYCNT
+		FROM 
+		    TBL_BOARD
+		WHERE 
+		<include refid="cri"/>
+		<![CDATA[ 
+		ROWNUM <= #{pageNum} * #{amount}
+		)
+		WHERE RN > (#{pageNum} - 1) * #{amount}
+		
+		]]>
+	</select>
+	
+	<select id="read" resultType="board">
+		SELECT * FROM TBL_BOARD WHERE BNO = ${bno}
+	</select>
+	<insert id="insert">
+		INSERT INTO TBL_BOARD(BNO, TITLE, CONTENT, WRITER)
+		VALUES (SEQ_BOARD.NEXTVAL, #{title}, #{content}, #{writer})
+	</insert>
+
+	<insert id="insertSelectKey">
+		<selectKey keyProperty="bno" order="BEFORE" resultType="long">
+		SELECT SEQ_BOARD.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO TBL_BOARD(BNO, TITLE, CONTENT, WRITER)
+		VALUES (#{bno}, #{title}, #{content}, #{writer})
+	</insert>
+
+	<delete id="delete" > 
+		DELETE TBL_BOARD WHERE BNO = #{bno}
+	</delete>
+
+	<update id="update">
+		UPDATE TBL_BOARD SET 
+		TITLE = #{title}, 
+		CONTENT = #{content}, 
+		UPDATEDATE = SYSDATE
+		WHERE BNO = #{bno}
+	</update>
+	
+	<select id="getTotalCount" resultType="int">
+		SELECT COUNT(*) FROM TBL_BOARD 
+		WHERE 
+		<include refid="cri"/>
+		BNO > 0
+	</select>
+	
+	<select id="getListDynamicTest" resultType="board">
+		SELECT * FROM TBL_BOARD
+		WHERE
+		<include refid="cri"/>
+		ROWNUM &lt;= 3
+	</select>
+	
+	<update id="updateReplyCnt">
+		UPDATE TBL_BOARD SET REPLYCNT = REPLYCNT + #{amount} WHERE BNO = #{bno} 
+	</update>
+  </mapper>
